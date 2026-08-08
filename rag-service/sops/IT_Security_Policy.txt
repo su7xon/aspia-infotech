@@ -1,0 +1,6 @@
+﻿SECTION 1: PASSWORD RESET PROCEDURES
+To reset your corporate password, access the self-service portal at https://identity.company.internal or call ext. 4357.
+Passwords must be at least 16 characters long with uppercase, lowercase, numbers, and special symbols.
+
+SECTION 2: MULTI-FACTOR AUTHENTICATION
+MFA is mandatory for all remote VPN connections. If your MFA token is lost, notify IT Security at ext. 9110 within 1 hour.

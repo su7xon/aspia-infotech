@@ -1,0 +1,6 @@
+{
+  "name": "Local RAG SOP Chatbot",
+  "description": "Offline Local RAG SOP Chatbot platform with Python microservice (ChromaDB + Ollama Qwen2-VL), Laravel REST API proxy, Angular chat component with image uploads, and live interactive RAG simulator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
