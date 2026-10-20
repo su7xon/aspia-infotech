@@ -15,7 +15,8 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
-  Info
+  Info,
+  MessageSquarePlus
 } from 'lucide-react';
 
 export interface RetrievedChunk {
@@ -39,6 +40,15 @@ export interface ChatMessage {
   isLoading?: boolean;
 }
 
+const HISTORY_LIMIT = 8;
+
+function buildHistoryPayload(messages: ChatMessage[]) {
+  return messages
+    .filter(m => m.id !== 'welcome_1' && !m.isLoading && m.text.trim().length > 0)
+    .slice(-HISTORY_LIMIT)
+    .map(m => ({ role: m.sender, content: m.text }));
+}
+
 export function ChatSimulator() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -51,6 +61,10 @@ export function ChatSimulator() {
       modelUsed: 'qwen2.5vl:7b (Ollama Local)'
     }
   ]);
+
+  const [sessionId, setSessionId] = useState<string>(
+    () => `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+  );
 
   const [inputQuestion, setInputQuestion] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -126,7 +140,9 @@ export function ChatSimulator() {
         body: JSON.stringify({
           question: questionToSubmit,
           image: currentImg,
-          confidence_threshold: confidenceThreshold
+          confidence_threshold: confidenceThreshold,
+          session_id: sessionId,
+          history: buildHistoryPayload(messages)
         })
       });
 
@@ -174,6 +190,25 @@ export function ChatSimulator() {
     setOpenCitations(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const startNewChat = () => {
+    if (isSending) return;
+    setSessionId(`session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+    setMessages([
+      {
+        id: 'welcome_1',
+        sender: 'assistant',
+        text: 'Welcome to the Company Internal SOP Assistant. I provide answers strictly grounded in official company procedures using our local vector engine.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        confidenceScore: 1.0,
+        passedThreshold: true,
+        modelUsed: 'qwen2.5vl:7b (Ollama Local)'
+      }
+    ]);
+    setInputQuestion('');
+    removeImage();
+    setOpenCitations({});
+  };
+
   const samplePrompts = [
     { label: '🔐 Password Reset Policy', query: 'How do I reset my corporate password remotely?' },
     { label: '⚠️ Equipment Error 402', query: 'What is the required safety procedure for Error Code 402 on the hydraulic press?' },
@@ -200,8 +235,19 @@ export function ChatSimulator() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 bg-slate-100/80 px-3 py-2 rounded-xl border border-slate-200">
-          <Sliders className="w-4 h-4 text-slate-600" />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={startNewChat}
+            disabled={isSending}
+            title="Start a fresh chat session (clears conversation memory)"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-semibold transition disabled:opacity-50"
+          >
+            <MessageSquarePlus className="w-4 h-4" />
+            New Chat
+          </button>
+
+          <div className="flex items-center gap-3 bg-slate-100/80 px-3 py-2 rounded-xl border border-slate-200">
+            <Sliders className="w-4 h-4 text-slate-600" />
           <div className="flex flex-col">
             <span className="text-xs font-semibold text-slate-700">
               Confidence Threshold: <span className="text-blue-600 font-bold">{Math.round(confidenceThreshold * 100)}%</span>
@@ -215,6 +261,7 @@ export function ChatSimulator() {
               onChange={(e) => setConfidenceThreshold(parseFloat(e.target.value))}
               className="w-32 h-1.5 bg-slate-300 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
+          </div>
           </div>
         </div>
       </div>

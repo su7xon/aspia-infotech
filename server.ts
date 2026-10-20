@@ -9,9 +9,22 @@ import {
   listSopsFromDb,
   insertSopToDb,
   deleteSopFromDb,
+  deleteSopByFilename,
+  clearAllSopsFromDb,
+  upsertUploadedDoc,
+  listUploadedDocs,
   logMessage,
+  getRecentMessages,
+  HistoryMessage,
   getDriver,
+  ensureSession,
+  logAnswerFeedback,
+  updateFeedback,
+  getFeedbackStats,
+  getRecentFeedback,
 } from './src/db';
+
+const HISTORY_LIMIT = 8;
 
 dotenv.config();
 
@@ -19,138 +32,11 @@ const app = express();
 const PORT = 3000;
 const RAG_SERVICE_URL = process.env.RAG_SERVICE_URL || 'http://127.0.0.1:8000';
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
 
 let dbAvailable = false;
 
-let sopDocuments = [
-  {
-    id: 'sop_it_001',
-    title: 'SOP-IT-001: Corporate IT Security & Remote Password Reset Policy',
-    filename: 'IT_Security_Policy.txt',
-    category: 'IT Security',
-    content: `SECTION 1: PASSWORD RESET PROCEDURES
-To reset your corporate Active Directory or Email password remotely, employees must access the self-service portal at https://identity.company.internal or call the IT Service Desk at ext. 4357 (HELP).
-Identity verification requires providing your 6-digit Employee ID and a one-time passcode (OTP) sent to your registered mobile authenticator app.
-Under no circumstances will IT staff ask for your current password. Passwords must be at least 16 characters long and combine uppercase, lowercase, numbers, and special symbols.
-
-SECTION 2: MULTI-FACTOR AUTHENTICATION (MFA)
-MFA is mandatory for all remote VPN connections and cloud applications.
-If your MFA hardware token is lost or stolen, immediately notify IT Security at security@company.com or call ext. 9110 within 1 hour.
-Temporary bypass codes are valid for 12 hours maximum and require manager approval.
-
-SECTION 3: PHISHING REPORTING
-Report suspicious emails using the 'Report Phishing' button in Outlook or forward the header to phishing@company.com. Do not click links or download attachments from unrecognized senders.`
-  },
-  {
-    id: 'sop_hr_004',
-    title: 'SOP-HR-004: Employee Paid Time Off (PTO) & Leave Request Rules',
-    filename: 'HR_Leave_Policy.txt',
-    category: 'Human Resources',
-    content: `SECTION 1: PTO SUBMISSION TIMELINES
-All planned Paid Time Off (PTO) requests exceeding 3 consecutive workdays must be submitted via the HR Portal at least 14 days in advance for manager approval.
-Single-day PTO requests require at least 48 hours notice.
-Unplanned sick leave must be reported to your direct manager before 8:30 AM on the day of absence.
-
-SECTION 2: SICK LEAVE & MEDICAL CERTIFICATES
-Employees are allocated 10 paid sick days per calendar year.
-Consecutive sick leave of 3 or more days requires an official medical certificate signed by a licensed medical practitioner upon returning to work.
-
-SECTION 3: BEREAVEMENT AND EMERGENCY LEAVE
-Employees are entitled to 5 days of paid bereavement leave for immediate family members (spouse, children, parents, siblings) and 3 days for extended family members.`
-  },
-  {
-    id: 'sop_eq_012',
-    title: 'SOP-EQ-012: Hydraulic Press Operational Safety & Error Code 402',
-    filename: 'Hydraulic_Press_Manual.txt',
-    category: 'Equipment Maintenance',
-    content: `SECTION 1: HYDRAULIC PRESS STARTUP CHECKLIST
-Before initializing Press Unit HP-400, verify hydraulic fluid level is between 75% and 90% on gauge G-2.
-Ensure emergency shut-off plunger E-STOP is disengaged and safety light curtains are fully operational.
-Operators must wear Level 3 protective goggles, steel-toe boots, and heavy duty heat-resistant gloves.
-
-SECTION 2: ERROR CODE 402 TROUBLESHOOTING
-Error Code 402 indicates "Hydraulic Fluid Pressure Over-Relief Valve Triggered".
-Immediate Action Steps for Error 402:
-1. Press the red Emergency Stop button immediately to halt motor M-1.
-2. Isolate main power supply panel P-04 and apply Lockout/Tagout (LOTO) padlock.
-3. Allow hydraulic pressure to bleed down to 0 PSI on Pressure Gauge P-1.
-4. Inspect return line filter F-2 for particulate blockages.
-5. Do NOT restart the unit manually. Contact Facilities Engineering at ext. 8820 or submit a Work Order in MaintenanceApp.
-
-SECTION 3: DAILY PREVENTATIVE MAINTENANCE
-Clean metal shavings from bed plate after every shift using non-magnetic scraper.
-Lubricate guide pillars with Grade-VG68 oil every 24 operating hours.`
-  },
-  {
-    id: 'sop_cs_008',
-    title: 'SOP-CS-008: Tier-3 Customer Escalation Protocol',
-    filename: 'Customer_Escalation_SOP.txt',
-    category: 'Customer Support',
-    content: `SECTION 1: ESCALATION CRITERIA
-Escalate a customer issue to Tier-3 Senior Support when:
-1. The outage affects more than 50 enterprise seats or core revenue-generating workflows.
-2. Resolution time exceeds 4 hours without resolution.
-3. The customer explicitly requests SLA Breach review under Enterprise Agreement Section 9.
-
-SECTION 2: INCIDENT REPORTING
-Create a Priority-1 ticket in Jira Service Management and assign it to 'Ops-Tier3-OnCall'.
-Notify the Duty Incident Commander on Slack channel #incident-response with ticket link, customer account ID, and steps taken so far.`
-  }
-];
-
-function computeVectorMatch(query: string, chunkText: string, heading: string): number {
-  const qLower = query.toLowerCase().trim();
-  const tLower = chunkText.toLowerCase();
-  const hLower = heading.toLowerCase();
-
-  const stopWords = new Set(['what', 'is', 'the', 'how', 'do', 'i', 'for', 'to', 'a', 'an', 'in', 'of', 'and', 'or', 'on', 'our', 'my', 'can', 'should']);
-  const words = qLower.replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
-
-  if (words.length === 0) return 0.2;
-
-  let matchCount = 0;
-  let weightSum = 0;
-
-  words.forEach(word => {
-    let wordWeight = 1;
-    if (/\d+/.test(word) || word.includes('402') || word.includes('password') || word.includes('leave') || word.includes('pto') || word.includes('press') || word.includes('mfa')) {
-      wordWeight = 2.5;
-    }
-
-    if (hLower.includes(word)) {
-      matchCount += 1.5 * wordWeight;
-    } else if (tLower.includes(word)) {
-      matchCount += 1.0 * wordWeight;
-    }
-    weightSum += wordWeight;
-  });
-
-  const rawRatio = matchCount / Math.max(1, weightSum);
-  let score = 0.25 + (rawRatio * 0.70);
-  if (words.some(w => tLower.includes(w) || hLower.includes(w))) {
-    score = Math.max(score, 0.65);
-  } else {
-    score = Math.min(score, 0.45);
-  }
-
-  return parseFloat(Math.min(0.98, Math.max(0.15, score)).toFixed(4));
-}
-
-function chunkSopDocument(doc: any) {
-  const sections = doc.content.split(/\n(?=SECTION\s+\d+:?|#{1,3}\s+|[A-Z0-9\s\-]{4,30}:)/i);
-  return sections.map((secStr: string, idx: number) => {
-    const lines = secStr.trim().split('\n');
-    const firstLine = lines[0].trim();
-    const heading = firstLine.length < 80 ? firstLine : `Section ${idx + 1}`;
-    return {
-      id: `${doc.id}_chunk_${idx}`,
-      source_file: doc.filename,
-      heading: heading,
-      text: secStr.trim()
-    };
-  }).filter((c: any) => c.text.length > 10);
-}
+let sopDocuments: { id: string; title: string; filename: string; category: string; content: string }[] = [];
 
 app.get('/api/health', (req, res) => {
   res.json({
@@ -190,10 +76,22 @@ app.post('/api/rag/ingest', async (req, res) => {
     try {
       await insertSopToDb(newDoc);
     } catch (e) {
-      console.warn('MySQL insert failed, keeping in memory.');
+      console.warn(`${getDriver()} insert failed, keeping in memory.`);
     }
   }
   res.json({ message: 'SOP successfully ingested and chunked.', sop: newDoc });
+});
+
+app.delete('/api/rag/sops', async (_req, res) => {
+  sopDocuments = [];
+  if (dbAvailable) {
+    try {
+      await clearAllSopsFromDb();
+    } catch (e: any) {
+      console.warn('Failed to clear SOPs from DB:', e?.message);
+    }
+  }
+  res.json({ message: 'All SOPs removed from database and memory.', remaining: 0 });
 });
 
 app.delete('/api/rag/sops/:id', async (req, res) => {
@@ -203,7 +101,7 @@ app.delete('/api/rag/sops/:id', async (req, res) => {
     try {
       await deleteSopFromDb(id);
     } catch (e) {
-      console.warn('MySQL delete failed, kept in memory.');
+      console.warn(`${getDriver()} delete failed, kept in memory.`);
     }
   }
   res.json({ message: 'SOP removed from index.', remaining: sopDocuments.length });
@@ -223,10 +121,23 @@ app.post('/api/rag/ingest-file', async (req, res) => {
     fd.append('file', new Blob([buf]), filename);
     fd.append('category', category || 'Custom Policy');
 
-    const ragRes = await fetch(`${RAG_SERVICE_URL}/ingest`, { method: 'POST', body: fd });
+    const ragRes = await fetch(`${RAG_SERVICE_URL}/ingest`, {
+      method: 'POST',
+      body: fd,
+      headers: { 'Connection': 'close' },
+      signal: AbortSignal.timeout(600000)
+    });
     const data = await ragRes.json();
     if (!ragRes.ok) {
       return res.status(ragRes.status).json({ error: data.detail || data.message || 'RAG ingestion failed.' });
+    }
+    if (dbAvailable) {
+      try {
+        const cat = category || data.category || 'Custom Policy';
+        await upsertUploadedDoc(data.filename || filename, cat, data.chunks || 0, data.bytes || buf.length);
+      } catch (e) {
+        console.warn('Failed to persist upload record to DB:', (e as any)?.message);
+      }
     }
     res.json(data);
   } catch (e: any) {
@@ -236,7 +147,66 @@ app.post('/api/rag/ingest-file', async (req, res) => {
 
 app.get('/api/rag/documents', async (_req, res) => {
   try {
-    const r = await fetch(`${RAG_SERVICE_URL}/documents`);
+    const r = await fetch(`${RAG_SERVICE_URL}/documents`, {
+      headers: { 'Connection': 'close' },
+      signal: AbortSignal.timeout(30000)
+    });
+    const data = await r.json();
+    if (dbAvailable && data.documents) {
+      try {
+        for (const d of data.documents) {
+          await upsertUploadedDoc(d.filename, d.category || 'Custom Policy', d.chunks || 0, 0).catch(() => {});
+        }
+      } catch {}
+    }
+    res.json(data);
+  } catch (e: any) {
+    if (dbAvailable) {
+      try {
+        const rows = await listUploadedDocs();
+        return res.json({
+          documents: rows.map((r: any) => ({
+            id: r.filename,
+            filename: r.filename,
+            category: r.category,
+            title: r.filename.replace(/_/g, ' ').replace(/\.[^.]+$/, ''),
+            content: '',
+            chunks: r.chunks,
+          })),
+          fallback: true,
+          persistent: true,
+        });
+      } catch {}
+    }
+    res.status(502).json({ error: `RAG service unreachable at ${RAG_SERVICE_URL}: ${e.message}` });
+  }
+});
+
+app.get('/api/rag/uploads', async (_req, res) => {
+  if (!dbAvailable) return res.json({ documents: [] });
+  try {
+    const rows = await listUploadedDocs();
+    res.json({
+      documents: rows.map((r: any) => ({
+        id: r.filename,
+        filename: r.filename,
+        category: r.category,
+        title: r.filename.replace(/_/g, ' ').replace(/\.[^.]+$/, ''),
+        content: '',
+        chunks: r.chunks,
+      })),
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/rag/chunks', async (_req, res) => {
+  try {
+    const r = await fetch(`${RAG_SERVICE_URL}/chunks`, {
+      headers: { 'Connection': 'close' },
+      signal: AbortSignal.timeout(30000)
+    });
     const data = await r.json();
     res.json(data);
   } catch (e: any) {
@@ -244,12 +214,51 @@ app.get('/api/rag/documents', async (_req, res) => {
   }
 });
 
+app.delete('/api/rag/documents', async (_req, res) => {
+  let ragData: any = {};
+  try {
+    const r = await fetch(`${RAG_SERVICE_URL}/documents`, {
+      method: 'DELETE',
+      headers: { 'Connection': 'close' },
+      signal: AbortSignal.timeout(60000)
+    });
+    ragData = await r.json().catch(() => ({}));
+  } catch (e: any) {
+    console.warn(`RAG service clear failed: ${e.message}`);
+  }
+
+  sopDocuments = [];
+  if (dbAvailable) {
+    try {
+      await clearAllSopsFromDb();
+    } catch (e: any) {
+      console.warn('Failed to clear DB tables:', e?.message);
+    }
+  }
+
+  res.json({
+    message: 'All SOPs and documents deleted successfully.',
+    rag: ragData
+  });
+});
+
 app.delete('/api/rag/documents/:filename', async (req, res) => {
   try {
-    const r = await fetch(`${RAG_SERVICE_URL}/documents/${encodeURIComponent(req.params.filename)}`, { method: 'DELETE' });
+    const r = await fetch(`${RAG_SERVICE_URL}/documents/${encodeURIComponent(req.params.filename)}`, {
+      method: 'DELETE',
+      headers: { 'Connection': 'close' },
+      signal: AbortSignal.timeout(60000)
+    });
     const data = await r.json();
     if (!r.ok) {
       return res.status(r.status).json({ error: data.detail || data.message || 'Delete failed.' });
+    }
+    if (dbAvailable) {
+      try {
+        await deleteSopByFilename(req.params.filename);
+      } catch (e) {
+        console.warn('Failed to clean DB upload record:', (e as any)?.message);
+      }
     }
     res.json(data);
   } catch (e: any) {
@@ -258,15 +267,23 @@ app.delete('/api/rag/documents/:filename', async (req, res) => {
 });
 
 app.post('/api/rag/ask', async (req, res) => {
-  const { question, image, confidence_threshold = 0.45, session_id } = req.body;
+  const { question, image, confidence_threshold = 0.62, session_id, history } = req.body;
   const sessionId = session_id || 'default_session';
 
   if (!question && !image) {
     return res.status(400).json({ error: 'Question string or image required.' });
   }
 
+  let conversationHistory: HistoryMessage[] = Array.isArray(history) ? history.slice(-HISTORY_LIMIT) : [];
   if (dbAvailable) {
     try {
+      const dbHistory = await getRecentMessages(sessionId, HISTORY_LIMIT);
+      if (dbHistory.length > 0) conversationHistory = dbHistory;
+    } catch (e) {
+      console.warn('Failed to load chat history, falling back to client-provided history.');
+    }
+    try {
+      await ensureSession(sessionId);
       await logMessage(sessionId, 'user', question || '(Image only)', image);
     } catch (e) {
       console.warn('Failed to log user message.');
@@ -276,81 +293,48 @@ app.post('/api/rag/ask', async (req, res) => {
   try {
     const ragRes = await fetch(`${RAG_SERVICE_URL}/ask`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ question, image, confidence_threshold })
+      headers: { 'Content-Type': 'application/json', 'Connection': 'close' },
+      body: JSON.stringify({ question, image, confidence_threshold, history: conversationHistory }),
+      signal: AbortSignal.timeout(300000)
     });
-    if (ragRes.ok) {
-      const data = await ragRes.json();
-      if (dbAvailable) {
-        try {
-          await logMessage(sessionId, 'assistant', data.answer, null, data.confidence_score, data.model_used);
-        } catch (e) {
-          console.warn('Failed to log assistant message.');
-        }
+    const data = await ragRes.json();
+    if (!ragRes.ok) {
+      return res.status(ragRes.status).json({
+        error: data.detail || data.message || 'RAG service returned an error.',
+        status: ragRes.status
+      });
+    }
+    if (dbAvailable) {
+      try {
+        await logMessage(sessionId, 'assistant', data.answer, null, data.confidence_score, data.model_used);
+      } catch (e) {
+        console.warn('Failed to log assistant message.');
       }
-      return res.json(data);
+      try {
+        const sources = (data.chunks_retrieved || []).map((c: any) => c.source_file).join(', ');
+        const feedbackId = await logAnswerFeedback({
+          session_id: sessionId,
+          question: question || '(Image)',
+          answer: data.answer || '',
+          confidence_score: data.confidence_score ?? null,
+          passed_threshold: data.passed_threshold ?? false,
+          grounding_passed: !data.model_used?.includes('grounding-failed'),
+          model_used: data.model_used || null,
+          sources,
+        });
+        data.feedback_id = feedbackId;
+      } catch (e) {
+        console.warn('Failed to log answer feedback entry.');
+      }
     }
-  } catch (e) {
-    console.warn(`RAG service unreachable at ${RAG_SERVICE_URL}, falling back to built-in simulator.`);
+    return res.json(data);
+  } catch (e: any) {
+    console.error(`RAG service unreachable at ${RAG_SERVICE_URL}: ${e.message}`);
+    return res.status(502).json({
+      error: `RAG service unreachable at ${RAG_SERVICE_URL}. Ensure the Python RAG service and Ollama are running.`,
+      degraded: true
+    });
   }
-
-  const queryText = (question || 'Image analysis request').trim();
-  const threshold = parseFloat(confidence_threshold) || 0.45;
-
-  let allChunks: any[] = [];
-  sopDocuments.forEach(doc => {
-    const chunks = chunkSopDocument(doc);
-    allChunks.push(...chunks);
-  });
-
-  const scoredChunks = allChunks.map(chunk => {
-    const score = computeVectorMatch(queryText, chunk.text, chunk.heading);
-    return {
-      ...chunk,
-      similarity_score: score
-    };
-  });
-
-  scoredChunks.sort((a, b) => b.similarity_score - a.similarity_score);
-
-  const topChunks = scoredChunks.slice(0, 3);
-  const bestScore = topChunks.length > 0 ? topChunks[0].similarity_score : 0.0;
-
-  const FALLBACK_MESSAGE = "This isn't covered in our SOPs — please contact the concerned department.";
-  const passedThreshold = bestScore >= threshold && topChunks.length > 0;
-
-  let generatedAnswer = '';
-
-  if (queryText.toLowerCase().includes('password') || queryText.toLowerCase().includes('reset')) {
-    generatedAnswer = 'According to SOP-IT-001 (Section 1), to reset your corporate password remotely, access the self-service portal at https://identity.company.internal or call the IT Service Desk at ext. 4357 (HELP). You will need your 6-digit Employee ID and an OTP from your registered authenticator app.';
-  } else if (queryText.toLowerCase().includes('sick') || queryText.toLowerCase().includes('leave') || queryText.toLowerCase().includes('pto')) {
-    generatedAnswer = 'Per SOP-HR-004 (Section 1 & 2), planned PTO exceeding 3 consecutive days requires submission via the HR Portal at least 14 days in advance. Unplanned sick leave must be reported to your direct manager before 8:30 AM. Consecutive sick leave of 3 or more days requires an official medical certificate upon returning.';
-  } else if (queryText.toLowerCase().includes('402') || queryText.toLowerCase().includes('press') || queryText.toLowerCase().includes('hydraulic') || image) {
-    generatedAnswer = 'According to SOP-EQ-012 (Section 2), Error Code 402 indicates "Hydraulic Fluid Pressure Over-Relief Valve Triggered". The required action steps are:\n1. Immediately press the red Emergency Stop button.\n2. Isolate power panel P-04 and apply Lockout/Tagout (LOTO).\n3. Allow pressure to bleed to 0 PSI on Gauge P-1.\n4. Inspect return line filter F-2 for blockages.\n5. Contact Facilities Engineering at ext. 8820 or submit a Work Order. Do NOT restart manually.';
-  } else if (queryText.toLowerCase().includes('escalate') || queryText.toLowerCase().includes('tier-3') || queryText.toLowerCase().includes('customer')) {
-    generatedAnswer = 'Under SOP-CS-008 (Section 1 & 2), escalate customer issues to Tier-3 when outages affect over 50 enterprise seats, resolution exceeds 4 hours, or the customer requests SLA breach review. Create a Priority-1 ticket in Jira assigned to Ops-Tier3-OnCall and alert #incident-response on Slack.';
-  } else {
-    const topDoc = topChunks[0];
-    generatedAnswer = topDoc
-      ? `Based strictly on ${topDoc.source_file} (${topDoc.heading}):\n\n${topDoc.text}`
-      : `I couldn't find a matching SOP section for that question, but here's some general guidance: ${queryText}`;
-  }
-
-  if (dbAvailable) {
-    try {
-      await logMessage(sessionId, 'assistant', generatedAnswer, null, bestScore, 'qwen2.5vl:7b (Ollama Local)');
-    } catch (e) {
-      console.warn('Failed to log assistant message.');
-    }
-  }
-
-  return res.json({
-    answer: generatedAnswer,
-    confidence_score: bestScore,
-    passed_threshold: passedThreshold,
-    chunks_retrieved: topChunks,
-    model_used: 'qwen2.5vl:7b (Ollama Local)'
-  });
 });
 
 async function startServer() {
@@ -358,13 +342,27 @@ async function startServer() {
     dbAvailable = await isDbAvailable();
     if (dbAvailable) {
       await seedSopsIfEmpty(sopDocuments);
-      console.log('MySQL connected. SOPs synced to database.');
+      try {
+        const dbSops = await listSopsFromDb();
+        if (dbSops && dbSops.length > 0) {
+          sopDocuments = dbSops.map((r: any) => ({
+            id: r.id,
+            title: r.title,
+            filename: r.filename,
+            category: r.category,
+            content: r.content || '',
+          }));
+        }
+      } catch (e) {
+        console.warn('Failed to load SOPs from DB into memory.');
+      }
+      console.log(`${getDriver()} connected. ${sopDocuments.length} SOP(s) synced from database.`);
     } else {
-      console.warn('MySQL unavailable. Running in-memory mode (SOPs lost on restart).');
+      console.warn(`${getDriver()} unavailable. Running in-memory mode (SOPs lost on restart).`);
     }
   } catch (e: any) {
     dbAvailable = false;
-    console.warn(`MySQL connection failed: ${e.message}. Running in-memory mode.`);
+    console.warn(`${getDriver()} connection failed: ${e.message}. Running in-memory mode.`);
   }
 
   if (process.env.NODE_ENV !== 'production') {
@@ -387,3 +385,41 @@ async function startServer() {
 }
 
 startServer();
+
+
+app.patch('/api/rag/feedback/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  const { feedback, note } = req.body;
+  if (!feedback || !['positive', 'negative'].includes(feedback)) {
+    return res.status(400).json({ error: "feedback must be 'positive' or 'negative'." });
+  }
+  if (!dbAvailable) return res.status(503).json({ error: 'Database not available.' });
+  try {
+    const ok = await updateFeedback(id, feedback, note);
+    if (!ok) return res.status(404).json({ error: 'Feedback entry not found.' });
+    res.json({ message: 'Feedback updated.', id, feedback });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/rag/feedback/stats', async (_req, res) => {
+  if (!dbAvailable) return res.status(503).json({ error: 'Database not available.' });
+  try {
+    const stats = await getFeedbackStats();
+    res.json(stats);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/rag/feedback/recent', async (req, res) => {
+  if (!dbAvailable) return res.status(503).json({ error: 'Database not available.' });
+  try {
+    const limit = Number(req.query.limit) || 50;
+    const rows = await getRecentFeedback(limit);
+    res.json({ feedback: rows });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});

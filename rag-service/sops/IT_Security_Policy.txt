@@ -1,6 +1,12 @@
 ﻿SECTION 1: PASSWORD RESET PROCEDURES
-To reset your corporate password, access the self-service portal at https://identity.company.internal or call ext. 4357.
-Passwords must be at least 16 characters long with uppercase, lowercase, numbers, and special symbols.
+To reset your corporate Active Directory or Email password remotely, employees must access the self-service portal at https://identity.company.internal or call the IT Service Desk at ext. 4357 (HELP).
+Identity verification requires providing your 6-digit Employee ID and a one-time passcode (OTP) sent to your registered mobile authenticator app.
+Under no circumstances will IT staff ask for your current password. Passwords must be at least 16 characters long and combine uppercase, lowercase, numbers, and special symbols.
 
-SECTION 2: MULTI-FACTOR AUTHENTICATION
-MFA is mandatory for all remote VPN connections. If your MFA token is lost, notify IT Security at ext. 9110 within 1 hour.
+SECTION 2: MULTI-FACTOR AUTHENTICATION (MFA)
+MFA is mandatory for all remote VPN connections and cloud applications.
+If your MFA hardware token is lost or stolen, immediately notify IT Security at security@company.com or call ext. 9110 within 1 hour.
+Temporary bypass codes are valid for 12 hours maximum and require manager approval.
+
+SECTION 3: PHISHING REPORTING
+Report suspicious emails using the 'Report Phishing' button in Outlook or forward the header to phishing@company.com. Do not click links or download attachments from unrecognized senders.

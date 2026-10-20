@@ -1,0 +1,2 @@
+SECTION 1: VERIFY
+Fix verification SOP after restart.

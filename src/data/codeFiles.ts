@@ -144,15 +144,12 @@ class AskRequest(BaseModel):
 def ask_sop_question(req: AskRequest):
     threshold = req.confidence_threshold or CONFIDENCE_THRESHOLD
     
-    # 1. Embed question via nomic-embed-text
     emb_res = requests.post(f"{OLLAMA_HOST}/api/embeddings", json={"model": EMBEDDING_MODEL, "prompt": req.question})
     query_vector = emb_res.json()["embedding"]
     
-    # 2. Vector search top 3 chunks in ChromaDB
     results = collection.query(query_embeddings=[query_vector], n_results=3)
     best_score = 1.0 - results["distances"][0][0] if results.get("distances") else 0.0
     
-    # 3. Confidence Threshold Check (No LLM invocation if low match score)
     if best_score < threshold:
         return {
             "answer": FALLBACK_MESSAGE,
@@ -161,7 +158,6 @@ def ask_sop_question(req: AskRequest):
             "chunks_retrieved": []
         }
         
-    # 4. Format Prompt and Call Qwen2-VL via Ollama
     context = "\\n\\n---\\n\\n".join(results["documents"][0])
     payload = {
         "model": LLM_MODEL,

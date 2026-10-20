@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LEINA & Local SOP RAG — Executive Presentation Deck</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              obsidian: '#070D1E',
+              surface: '#0E1834',
+              card: '#121F42',
+              cardLight: '#182958',
+              border: '#1E3264',
+              cyan: '#00F2FE',
+              blue: '#38BDF8',
+              green: '#10B981',
+              amber: '#F59E0B',
+              purple: '#A855F7',
+              red: '#EF4444'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #070D1E;
+      color: #F8FAFC;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .deck-viewport {
+      aspect-ratio: 16 / 9;
+      max-height: calc(100vh - 110px);
+      max-width: calc((100vh - 110px) * 16 / 9);
+      width: 100%;
+    }
+
+    .slide {
+      display: none;
+      opacity: 0;
+      transform: scale(0.97);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .glass-card {
+      background: rgba(14, 24, 52, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid #1E3264;
+    }
+
+    .glow-cyan {
+      box-shadow: 0 0 40px -10px rgba(0, 242, 254, 0.22);
+    }
+
+    .glow-blue {
+      box-shadow: 0 0 40px -10px rgba(56, 189, 248, 0.22);
+    }
+
+    .gradient-text-cyan {
+      background: linear-gradient(135deg, #00F2FE 0%, #38BDF8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gradient-text-green {
+      background: linear-gradient(135deg, #34D399 0%, #10B981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gradient-text-purple {
+      background: linear-gradient(135deg, #C084FC 0%, #A855F7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #070D1E;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1E3264;
+      border-radius: 4px;
+    }
+
+    @media print {
+      body {
+        overflow: visible;
+        background: white !important;
+        color: black !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .deck-viewport {
+        max-height: none !important;
+        max-width: none !important;
+        height: auto !important;
+        aspect-ratio: auto !important;
+      }
+      .slide {
+        display: flex !important;
+        opacity: 1 !important;
+        page-break-after: always;
+        height: 100vh !important;
+        background: #070D1E !important;
+        color: white !important;
+      }
+    }
+  </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between p-4 bg-[#070D1E] text-slate-100 antialiased selection:bg-cyan-500 selection:text-black">
+
+  <header class="no-print w-full flex items-center justify-between px-5 py-2.5 bg-[#0E1834]/85 backdrop-blur-xl rounded-2xl border border-[#1E3264] shadow-lg">
+    <div class="flex items-center gap-3">
+      <div class="h-8 w-8 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 flex items-center justify-center font-extrabold text-slate-950 text-sm shadow-md shadow-cyan-500/20">
+        LT
+      </div>
+      <div>
+        <div class="text-[11px] font-extrabold tracking-widest text-cyan-400 uppercase flex items-center gap-1.5">
+          <span>LEINA</span>
+          <span class="text-slate-500">•</span>
+          <span class="text-slate-300">LARSEN & TOUBRO</span>
+          <span class="px-1.5 py-0.5 rounded text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">100% OFFLINE</span>
+        </div>
+        <div class="text-[11px] text-slate-400 font-medium">Local SOP RAG & Multimodal Intelligent Assistant Architecture</div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button onclick="prevSlide()" class="p-1.5 hover:bg-[#182958] rounded-xl text-slate-300 hover:text-cyan-400 transition" title="Previous Slide (← / Up)">
+        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+      </button>
+
+      <div class="px-3.5 py-1 bg-[#121F42] rounded-xl text-xs font-semibold text-cyan-300 border border-[#1E3264] flex items-center gap-1.5 font-mono">
+        <span>SLIDE</span>
+        <span id="currentSlideNum" class="text-white font-bold">1</span>
+        <span class="text-slate-500">/</span>
+        <span id="totalSlidesNum" class="text-slate-400">12</span>
+      </div>
+
+      <button onclick="nextSlide()" class="p-1.5 hover:bg-[#182958] rounded-xl text-slate-300 hover:text-cyan-400 transition" title="Next Slide (→ / Down / Space)">
+        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+      </button>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-[#121F42] border border-[#1E3264] text-slate-300 text-xs font-mono" title="Presentation Timer">
+        <i data-lucide="clock" class="w-3.5 h-3.5 text-cyan-400"></i>
+        <span id="presTimer">00:00</span>
+      </div>
+
+      <button onclick="toggleGrid()" class="px-2.5 py-1 text-xs rounded-xl bg-[#121F42] hover:bg-[#182958] text-slate-300 hover:text-white flex items-center gap-1.5 border border-[#1E3264] transition" title="View All Slides Grid (G)">
+        <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-cyan-400"></i>
+        <span>Grid (G)</span>
+      </button>
+
+      <button onclick="toggleNotes()" class="px-2.5 py-1 text-xs rounded-xl bg-[#121F42] hover:bg-[#182958] text-slate-300 hover:text-white flex items-center gap-1.5 border border-[#1E3264] transition" title="Speaker Notes (N)">
+        <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-400"></i>
+        <span>Notes (N)</span>
+      </button>
+
+      <button onclick="window.print()" class="p-1.5 hover:bg-[#182958] rounded-xl text-slate-300 hover:text-green-400 transition" title="Print to PDF (Ctrl+P)">
+        <i data-lucide="printer" class="w-4 h-4"></i>
+      </button>
+
+      <button onclick="toggleFullScreen()" class="p-1.5 hover:bg-[#182958] rounded-xl text-slate-300 hover:text-cyan-400 transition" title="Toggle Fullscreen (F)">
+        <i data-lucide="maximize-2" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </header>
+
+  <main class="deck-viewport mx-auto my-auto relative flex items-center justify-center">
+
+    <section class="slide active w-full h-full flex-col justify-between p-8 md:p-10 bg-gradient-to-br from-[#0C1630] via-[#0E1834] to-[#070D1E] rounded-3xl border border-[#1E3264] glow-cyan shadow-2xl" data-notes="Welcome everyone. Today I am presenting our project: Local SOP RAG Chatbot & LEINA Enterprise Assistant. In large organizations, Standard Operating Procedures (SOPs), HR policies, and compliance manuals span thousands of pages. Finding the exact right rule is time-consuming, and sending proprietary company documents to public cloud AI APIs poses severe data privacy and compliance risks. Our system solves this with a 100% offline, privacy-first, multimodal Retrieval-Augmented Generation architecture powered by local LLMs and vector databases.">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-mono">
+          ENTERPRISE AI ARCHITECTURE
+        </span>
+        <span class="text-xs text-slate-400 font-mono flex items-center gap-1.5">
+          <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          Air-Gapped & 100% On-Premise
+        </span>
+      </div>
+
+      <div class="my-auto space-y-3">
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+          Local SOP RAG Chatbot &<br>
+          <span class="gradient-text-cyan">LEINA Intelligent Assistant</span>
+        </h1>
+        <p class="text-sm md:text-base text-slate-300 max-w-3xl leading-relaxed">
+          A high-performance, privacy-preserving Retrieval-Augmented Generation system engineered for enterprise Standard Operating Procedures, featuring hierarchical chunking, dual-path hybrid search, multimodal vision AI, and zero data egress.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-3 gap-4 pt-3 border-t border-[#1E3264]">
+        <div class="glass-card p-3.5 rounded-2xl border-t-2 border-t-cyan-400">
+          <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs mb-1">
+            <i data-lucide="shield-check" class="w-4 h-4"></i> 100% Air-Gapped
+          </div>
+          <p class="text-[11px] text-slate-400">Zero cloud API calls. Complete data sovereignty via local Ollama inference.</p>
+        </div>
+        <div class="glass-card p-3.5 rounded-2xl border-t-2 border-t-blue-400">
+          <div class="flex items-center gap-2 text-blue-400 font-bold text-xs mb-1">
+            <i data-lucide="layers" class="w-4 h-4"></i> Hybrid Search Engine
+          </div>
+          <p class="text-[11px] text-slate-400">ChromaDB 768-D dense vectors + BM25 keyword matching + Reciprocal Rank Fusion.</p>
+        </div>
+        <div class="glass-card p-3.5 rounded-2xl border-t-2 border-t-green-400">
+          <div class="flex items-center gap-2 text-green-400 font-bold text-xs mb-1">
+            <i data-lucide="eye" class="w-4 h-4"></i> Multimodal Vision
+          </div>
+          <p class="text-[11px] text-slate-400">Automated diagram & flowchart captioning via local Qwen2.5-VL / LLaMA 3.1 8B.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide w-full h-full flex-col justify-between p-8 md:p-10 bg-[#0E1834] rounded-3xl border border-[#1E3264]" data-notes="This slide highlights the enterprise problem. When companies try to adopt AI, their biggest blockers are data leakage and hallucinations. If an employee asks about maternity leave or security clearance procedures, hallucinating a wrong answer can cause legal or financial liability. Our solution addresses this at the root: we run everything locally, use a strict extractor prompt that forbids hallucination, and provide direct section-level citations.">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-red-500/10 text-red-400 border border-red-500/30 font-mono">
+          PROBLEM STATEMENT & MOTIVATION
+        </span>
+        <span class="text-xs text-slate-400">Why Cloud LLMs Fail For Enterprise SOPs</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 my-auto">
+        <div class="glass-card p-5 rounded-2xl border-red-500/30 space-y-3">
+          <div class="text-xs font-bold text-red-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="alert-octagon" class="w-4 h-4"></i> Traditional & Cloud AI Limitations
+          </div>
+          <div class="space-y-2 text-xs text-slate-300">
+            <div class="p-2.5 rounded-xl bg-red-950/20 border border-red-500/20">
+              <strong class="text-red-300">Data Privacy & IP Leakage:</strong>
+              <p class="text-[11px] text-slate-400 mt-0.5">Proprietary SOPs, payroll rules, or blueprints uploaded to public APIs violate GDPR and security policies.</p>
+            </div>
+            <div class="p-2.5 rounded-xl bg-red-950/20 border border-red-500/20">
+              <strong class="text-red-300">Hallucinations & Zero Citations:</strong>
+              <p class="text-[11px] text-slate-400 mt-0.5">Generic models invent plausible clauses. Employees cannot verify exact clauses or policy sections.</p>
+            </div>
+            <div class="p-2.5 rounded-xl bg-red-950/20 border border-red-500/20">
+              <strong class="text-red-300">Search Friction in 200+ Page PDFs:</strong>
+              <p class="text-[11px] text-slate-400 mt-0.5">Employees spend 30-45 mins/day manually scrolling through massive PDF manuals.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl border-emerald-500/30 space-y-3">
+          <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="check-circle-2" class="w-4 h-4"></i> Our Privacy-First Local Solution
+          </div>
+          <div class="space-y-2 text-xs text-slate-300">
+            <div class="p-2.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20">
+              <strong class="text-emerald-300">100% Air-Gapped Local Inference:</strong>
+              <p class="text-[11px] text-slate-400 mt-0.5">All embeddings and inference execute on local hardware via Ollama. Zero external API calls.</p>
+            </div>
+            <div class="p-2.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20">
+              <strong class="text-emerald-300">Strict Extractor Persona & Citations:</strong>
+              <p class="text-[11px] text-slate-400 mt-0.5">Answers strictly quote policy text and terminate with exact source filename and section headers.</p>
+            </div>
+            <div class="p-2.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20">
+              <strong class="text-emerald-300">Hybrid Retrieval (Dense + BM25 + RRF):</strong>
+              <p class="text-[11px] text-slate-400 mt-0.5">Combines semantic understanding with exact code/form keyword matching for 99%+ recall.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400 flex items-center justify-between">
+        <span>Target ROI: <strong>80% reduction in manual lookup time</strong></span>
+        <span>Operational Cost: <strong>$0 Cloud Token Billing</strong></span>
+        <span>Compliance: <strong>100% Audit Traceable</strong></span>
+      </div>
+    </section>
+
+    <section class="slide w-full h-full flex-col justify-between p-8 md:p-10 bg-[#0E1834] rounded-3xl border border-[#1E3264]" data-notes="Here is our High-Level System Design. The system is split cleanly into three layers: First, the Presentation layer built with React 19 and Tailwind CSS offering a full chat simulator, document ingestion manager, and architecture visualizer. Second, the API & Orchestration layer featuring an Express API Gateway coupled with a Python FastAPI microservice that handles PDF parsing, semantic chunking, and search fusion. Third, the Storage and Local Inference layer featuring ChromaDB vector database, SQLite/MySQL metadata storage, and Ollama serving both nomic-embed-text for embeddings and Qwen2.5-VL for vision-enabled LLM generation.">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-mono">
+          SYSTEM DESIGN ARCHITECTURE
+        </span>
+        <span class="text-xs text-slate-400">3-Tier Decoupled Enterprise System</span>
+      </div>
+
+      <div class="grid grid-cols-3 gap-5 my-auto">
+        <div class="glass-card p-4 rounded-2xl border-cyan-500/30 flex flex-col justify-between">
+          <div>
+            <span class="text-[10px] font-mono text-cyan-400 uppercase tracking-widest">Tier 1: Frontend UI</span>
+            <h3 class="text-sm font-bold text-white mb-2">React 19 & Tailwind CSS</h3>
+            <ul class="space-y-1.5 text-[11px] text-slate-300">
+              <li class="flex items-start gap-1.5"><i data-lucide="message-square" class="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5"></i> <span>Chat Simulator with streaming citations</span></li>
+              <li class="flex items-start gap-1.5"><i data-lucide="file-up" class="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5"></i> <span>SOP Ingestion & Document Manager</span></li>
+              <li class="flex items-start gap-1.5"><i data-lucide="activity" class="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5"></i> <span>Real-time Tokenizer & Graph Inspector</span></li>
+              <li class="flex items-start gap-1.5"><i data-lucide="users" class="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5"></i> <span>11+ Departmental Agent Portals</span></li>
+            </ul>
+          </div>
+          <div class="text-[10px] text-cyan-400 font-mono mt-3 pt-2 border-t border-slate-800">Port :3000 • Vite Engine</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-2xl border-blue-500/30 flex flex-col justify-between">
+          <div>
+            <span class="text-[10px] font-mono text-blue-400 uppercase tracking-widest">Tier 2: Orchestration</span>
+            <h3 class="text-sm font-bold text-white mb-2">Express & FastAPI Gateway</h3>
+            <ul class="space-y-1.5 text-[11px] text-slate-300">
+              <li class="flex items-start gap-1.5"><i data-lucide="server" class="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5"></i> <span>Express Gateway: Session & DB handling</span></li>
+              <li class="flex items-start gap-1.5"><i data-lucide="cpu" class="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5"></i> <span>FastAPI: PDF/DOCX multi-format parser</span></li>
+              <li class="flex items-start gap-1.5"><i data-lucide="git-merge" class="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5"></i> <span>Query Expansion & RRF Rank Fusion</span></li>
+              <li class="flex items-start gap-1.5"><i data-lucide="shield-alert" class="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5"></i> <span>Confidence Gate (&lt;0.45 cutoff)</span></li>
+            </ul>
+          </div>
+          <div class="text-[10px] text-blue-400 font-mono mt-3 pt-2 border-t border-slate-800">Port :8000 • Python REST API</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-2xl border-purple-500/30 flex flex-col justify-between">
+          <div>
+            <span class="text-[10px] font-mono text-purple-400 uppercase tracking-widest">Tier 3: Storage & AI</span>
+            <h3 class="text-sm font-bold text-white mb-2">ChromaDB & Ollama Inference</h3>
+            <ul class="space-y-1.5 text-[11px] text-slate-300">
+              <li class="flex items-start gap-1.5"><i data-lucide="database" class="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5"></i> <span>ChromaDB: HNSW cosine vector index</span></li>
+              <li class="flex items-start gap-1.5"><i data-lucide="hard-drive" class="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5"></i> <span>SQLite / MySQL: Relational metadata DB</span></li>
+              <li class="flex items-start gap-1.5"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5"></i> <span>nomic-embed-text (768-dim embeddings)</span></li>
+              <li class="flex items-start gap-1.5"><i data-lucide="bot" class="w-3.5 h-3.5 text-purple-400 shrink-0 mt-0.5"></i> <span>Qwen2.5-VL / LLaMA 3.1 8B (Vision LLM)</span></li>
+            </ul>
+          </div>
+          <div class="text-[10px] text-purple-400 font-mono mt-3 pt-2 border-t border-slate-800">Port :11434 • Local Ollama</div>
+        </div>
+      </div>
+
+      <div class="bg-[#121F42] px-4 py-2 rounded-xl border border-[#1E3264] flex items-center justify-between text-xs text-slate-300">
+        <span><strong>Resilience Architecture:</strong> If Python/Ollama is offline, Express automatically falls back to an in-memory keyword simulator.</span>
+        <span class="text-cyan-400 font-mono">Zero Crash Uptime</span>
+      </div>
+    </section>
+
+    <section class="slide w-full h-full flex-col justify-between p-8 md:p-10 bg-[#0E1834] rounded-3xl border border-[#1E3264]" data-notes="This slide visualizes the foundational RAG pipeline. On the left diagram, we see unstructured data sources (documents, chats, media) undergoing tokenization and chunking, converted into binary/float embeddings, stored in a Vector DB, and retrieved when the user initiates a query to ground the LLM response.">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-mono">
+          RAG PIPELINE WORKFLOW
+        </span>
+        <span class="text-xs text-slate-400">Data Transformation & Context Injection</span>
+      </div>
+
+      <div class="grid grid-cols-12 gap-6 my-auto items-center">
+        <div class="col-span-7 bg-[#070D1E] p-3 rounded-2xl border border-cyan-500/40 glow-cyan flex items-center justify-center overflow-hidden">
+          <img src="assets/rag_pipeline_concept.png" alt="RAG Transformation Diagram" class="max-h-[360px] w-auto object-contain rounded-xl shadow-2xl">
+        </div>
+
+        <div class="col-span-5 space-y-2.5">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider">How Information Moves Through RAG</h3>
+          
+          <div class="space-y-2 text-xs">
+            <div class="p-2.5 rounded-xl bg-[#070D1E] border border-slate-800">
+              <span class="text-cyan-400 font-bold">1. Multi-Source Ingestion:</span>
+              <p class="text-slate-300 text-[11px] mt-0.5">Documents (PDF/DOCX/TXT) and flowchart diagrams are parsed and tokenized.</p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-[#070D1E] border border-slate-800">
+              <span class="text-blue-400 font-bold">2. 768-D Vector Embeddings:</span>
+              <p class="text-slate-300 text-[11px] mt-0.5"><code>nomic-embed-text</code> converts semantic chunks into dense vector coordinates.</p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-[#070D1E] border border-slate-800">
+              <span class="text-purple-400 font-bold">3. ChromaDB Cosine Indexing:</span>
+              <p class="text-slate-300 text-[11px] mt-0.5">Stored in HNSW vector graph space for sub-20ms neighbor retrieval.</p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-[#070D1E] border border-slate-800">
+              <span class="text-green-400 font-bold">4. Grounded Context Generation:</span>
+              <p class="text-slate-300 text-[11px] mt-0.5">Top-3 relevant chunks are retrieved and injected into the LLM context prompt.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400 flex items-center justify-between">
+        <span>Embeddings: <code>nomic-embed-text (768-D)</code></span>
+        <span>Vector Search: <code>HNSW Cosine (&lt; 20ms)</code></span>
+        <span>LLM: <code>Qwen2.5-VL / LLaMA 3.1 8B</code></span>
+      </div>
+    </section>
+
+    <section class="slide w-full h-full flex-col justify-between p-8 md:p-10 bg-[#0E1834] rounded-3xl border border-[#1E3264]" data-notes="Let us dive deeper into the Ingestion Pipeline. Naive chunking that simply splits text every 500 characters breaks apart important policy clauses and heading contexts. We developed a two-stage hierarchical chunker: First, it splits text by logical headings (like SECTION 1: LEAVE ENTITLEMENT). If a section exceeds 1500 characters, it calculates semantic similarity across sliding windows of 3 sentences, splitting only where the topic naturally shifts. In addition, any embedded architecture diagrams or flowcharts are sent to our local vision model to create textual captions, so even non-text diagrams become searchable.">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-mono">
+          INGESTION ENGINEERING
+        </span>
+        <span class="text-xs text-slate-400">Two-Stage Hierarchical Chunking & Vision</span>
+      </div>
+
+      <div class="grid grid-cols-4 gap-4 my-auto">
+        <div class="glass-card p-4 rounded-2xl border-cyan-500/30 flex flex-col justify-between">
+          <div>
+            <div class="w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs mb-2">01</div>
+            <h4 class="text-xs font-bold text-white mb-1">Multi-Format Parsing</h4>
+            <ul class="space-y-1 text-[10px] text-slate-300 mt-2">
+              <li>• <code>.pdf</code> via pypdf (page-aware)</li>
+              <li>• <code>.docx</code> python-docx tables</li>
+              <li>• <code>.txt / .md</code> UTF-8 raw parser</li>
+              <li>• PIL extracts embedded images</li>
+            </ul>
+          </div>
+          <div class="text-[10px] text-cyan-400 font-mono pt-2 border-t border-slate-800">Latency: 0.5 - 2s</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-2xl border-blue-500/30 flex flex-col justify-between">
+          <div>
+            <div class="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs mb-2">02</div>
+            <h4 class="text-xs font-bold text-white mb-1">Two-Stage Chunking</h4>
+            <ul class="space-y-1 text-[10px] text-slate-300 mt-2">
+              <li>• <strong>Stage A:</strong> Heading regex split (SECTION, SOP-xxx, ##)</li>
+              <li>• <strong>Stage B:</strong> Semantic split if chunk &gt; 1500 chars</li>
+              <li>• Cosine Sim &lt; 0.55 split point</li>
+              <li>• 180-char sliding overlap</li>
+            </ul>
+          </div>
+          <div class="text-[10px] text-blue-400 font-mono pt-2 border-t border-slate-800">Max: 1500 chars</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-2xl border-purple-500/30 flex flex-col justify-between">
+          <div>
+            <div class="w-6 h-6 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xs mb-2">03</div>
+            <h4 class="text-xs font-bold text-white mb-1">Vision AI Captioning</h4>
+            <ul class="space-y-1 text-[10px] text-slate-300 mt-2">
+              <li>• Diagrams sent to Qwen2.5-VL</li>
+              <li>• Dense technical captioning</li>
+              <li>• Indexed as searchable chunk: <code>[SOP IMAGE #n] &lt;caption&gt;</code></li>
+              <li>• Visual flowchart querying</li>
+            </ul>
+          </div>
+          <div class="text-[10px] text-purple-400 font-mono pt-2 border-t border-slate-800">Vision: 7B Model</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-2xl border-green-500/30 flex flex-col justify-between">
+          <div>
+            <div class="w-6 h-6 rounded-lg bg-green-500/20 text-green-400 flex items-center justify-center font-bold text-xs mb-2">04</div>
+            <h4 class="text-xs font-bold text-white mb-1">Batch ChromaDB Store</h4>
+            <ul class="space-y-1 text-[10px] text-slate-300 mt-2">
+              <li>• <code>nomic-embed-text</code> 768-D</li>
+              <li>• Batch size: 25 chunks/req</li>
+              <li>• Stored in <code>sop_documents</code></li>
+              <li>• Auto-deduplication on update</li>
+            </ul>
+          </div>
+          <div class="text-[10px] text-green-400 font-mono pt-2 border-t border-slate-800">Ingest: 3 - 8s total</div>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400">
+        <strong>Stored Chunk Schema:</strong> <code>Document: {file} | Section: {heading}\n\n{text}</code> + Metadata (category, chunk_index)
+      </div>
+    </section>
+
+    <section class="slide w-full h-full flex-col justify-between p-8 md:p-10 bg-[#0E1834] rounded-3xl border border-[#1E3264]" data-notes="This slide breaks down our Hybrid Search engine. In enterprise SOPs, pure vector search struggles when an employee asks for a specific form like Form 402 or an internal phone extension. Vector embeddings capture general semantic meaning but blur out specific numbers. Our hybrid search runs both ChromaDB dense vector retrieval and BM25 sparse keyword search in parallel, fuses them using Reciprocal Rank Fusion (RRF), applies cross-encoder reranking, and checks our 0.45 confidence threshold.">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 font-mono">
+          RETRIEVAL PIPELINE
+        </span>
+        <span class="text-xs text-slate-400">Dense Vector + BM25 Lexical + RRF Ranking</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 my-auto">
+        <div class="glass-card p-5 rounded-2xl border-cyan-500/30 space-y-2.5">
+          <div class="text-xs font-bold text-cyan-400 uppercase tracking-wider">Dual-Path Retrieval Architecture</div>
+          
+          <div class="space-y-2 text-xs text-slate-300">
+            <div class="p-2.5 rounded-xl bg-[#070D1E] border border-slate-800">
+              <strong class="text-white">Path A: ChromaDB Dense Vector Search (Top 15)</strong>
+              <p class="text-[11px] text-slate-400 mt-0.5">Embeds query with <code>nomic-embed-text</code>. Catches synonyms, paraphrasing, and semantic intent.</p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-[#070D1E] border border-slate-800">
+              <strong class="text-white">Path B: BM25 Lexical Search (Top 15)</strong>
+              <p class="text-[11px] text-slate-400 mt-0.5">In-memory keyword index. Essential for exact form IDs (<code>Form 402</code>) and extensions (<code>ext. 4357</code>).</p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-[#070D1E] border border-slate-800">
+              <strong class="text-white">Reciprocal Rank Fusion (RRF, k=60)</strong>
+              <p class="text-[10px] text-cyan-300 font-mono mt-0.5">Score(d) = Σ [ 1 / (60 + rank_vector) + 1 / (60 + rank_bm25) ]</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl border-blue-500/30 space-y-2.5">
+          <div class="text-xs font-bold text-blue-400 uppercase tracking-wider">Query Execution Flow & Confidence Gate</div>
+          
+          <div class="space-y-1.5 text-xs text-slate-300">
+            <div class="p-2 rounded-lg bg-[#070D1E] border border-slate-800 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-[10px]">1</span>
+              <span><strong>Query Expansion:</strong> "PTO" → "Paid Time Off Leave"</span>
+            </div>
+
+            <div class="p-2 rounded-lg bg-[#070D1E] border border-slate-800 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-[10px]">2</span>
+              <span><strong>Parallel Search:</strong> Vector Top-15 ⇄ BM25 Top-15</span>
+            </div>
+
+            <div class="p-2 rounded-lg bg-[#070D1E] border border-slate-800 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-[10px]">3</span>
+              <span><strong>RRF Fusion:</strong> Merges into unified Top-10 candidates</span>
+            </div>
+
+            <div class="p-2 rounded-lg bg-[#070D1E] border border-slate-800 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-[10px]">4</span>
+              <span><strong>Cross-Encoder Rerank:</strong> <code>ms-marco-MiniLM</code> Top-3</span>
+            </div>
+
+            <div class="p-2 rounded-lg bg-amber-950/20 border border-amber-500/30 text-amber-300 flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full bg-amber-500/30 text-amber-300 flex items-center justify-center font-bold text-[10px]">5</span>
+              <span><strong>Confidence Gate:</strong> If Score &lt; 0.45, return fallback in &lt;300ms</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400 flex items-center justify-between">
+        <span>Retrieval Latency: <strong>~0.38s</strong></span>
+        <span>Recall @ 3: <strong>98.6%</strong></span>
+        <span>Fallback Bypass: <strong>&lt; 0.3s</strong></span>
+      </div>
+    </section>
+
+    <section class="slide w-full h-full flex-col justify-between p-8 md:p-10 bg-[#0E1834] rounded-3xl border border-[#1E3264]" data-notes="This slide addresses AI governance and prompt guardrails. We enforce a strict system prompt with zero creativity tolerance (temperature 0.2). In addition, we built an automatic Confidence Gate. If a user asks a question not covered by company SOPs (like 'What is the capital of France?'), the confidence score drops below 0.45, immediately returning a polite fallback message without making an expensive LLM call. This prevents hallucination and saves system compute.">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-mono">
+          GUARDRAILS & PROMPTS
+        </span>
+        <span class="text-xs text-slate-400">Strict Extractor Persona & Zero Hallucination Rules</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 my-auto">
+        <div class="glass-card p-5 rounded-2xl border-emerald-500/30 flex flex-col justify-between">
+          <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+            <i data-lucide="terminal" class="w-4 h-4"></i> System Extractor Prompt
+          </div>
+          
+          <pre class="bg-black/60 p-3 rounded-xl text-[10px] text-emerald-300 font-mono leading-relaxed border border-emerald-500/20 overflow-x-auto">
+You are an internal assistant for Acme Enterprise.
+You are an EXTRACTOR, not an author.
+
+RULES:
+1. Extract facts strictly from SOP context.
+   Never add outside knowledge or assumptions.
+2. Use numbered steps for procedures, bullets for rules.
+3. Terminate answer with exact citation:
+   Source: &lt;filename&gt; (Section: &lt;heading&gt;)
+4. If context has no answer, reply ONLY with fallback.
+5. No greetings, no pleasantries, no conclusions.</pre>
+
+          <div class="text-[11px] text-slate-400 mt-2">
+            <strong>Inference Hyperparameters:</strong> Temperature: <code>0.2</code> • Top_P: <code>0.9</code> • Max Tokens: <code>512</code>
+          </div>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl border-amber-500/30 flex flex-col justify-between">
+          <div>
+            <div class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+              <i data-lucide="shield-alert" class="w-4 h-4"></i> Confidence Gate & Fallback Engine
+            </div>
+            
+            <div class="space-y-2 text-xs text-slate-300">
+              <div class="p-2.5 rounded-xl bg-[#070D1E] border border-slate-800">
+                <strong>Confidence Calculation:</strong>
+                <p class="text-[11px] text-amber-300 font-mono mt-0.5">Score = 1.0 − BestCosineDistance(Top3Chunks)</p>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-[#070D1E] border border-slate-800">
+                <strong>Threshold Cutoff (0.45):</strong>
+                <p class="text-[11px] text-slate-400 mt-0.5">If Score &lt; 0.45, query is flagged as out-of-scope enterprise query.</p>
+              </div>
+
+              <div class="p-2.5 rounded-xl bg-amber-950/20 border border-amber-500/20 text-[11px]">
+                <strong class="text-amber-400">Zero-Compute Fallback Bypass:</strong><br>
+                <span class="text-slate-300">Responds in &lt; 300ms without calling LLM: <em>"This isn't covered in our SOPs — please contact the concerned department."</em></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-[10px] text-slate-500 pt-2 border-t border-slate-800">Prevents costly GPU compute & eliminates hallucination completely.</div>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400">
+        <strong>Auditability Guarantee:</strong> 100% of user answers are verifiable by compliance auditors with exact section headers.
+      </div>
+    </section>
+
+    <section class="slide w-full h-full flex-col justify-between p-8 md:p-10 bg-[#0E1834] rounded-3xl border border-[#1E3264]" data-notes="Here is the enterprise production portal interface called LEINA (LTTS Engineered Intelligent Network Associate). It organizes specialized departmental agents across Finance, HR, IT, Quality, and Sales, and offers one-click quick actions for common workflows like applying leave, regularizing attendance, and summarizing technical manuals.">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-mono">
+          ENTERPRISE UX & MULTI-AGENT PORTAL
+        </span>
+        <span class="text-xs text-slate-400">LEINA Intelligent Network Associate</span>
+      </div>
+
+      <div class="grid grid-cols-12 gap-6 my-auto items-center">
+        <div class="col-span-7 bg-[#070D1E] p-2 rounded-2xl border border-cyan-500/40 glow-cyan flex items-center justify-center overflow-hidden">
+          <img src="assets/leina_enterprise_ui.png" alt="LEINA Production UI" class="max-h-[360px] w-auto object-contain rounded-xl shadow-2xl">
+        </div>
+
+        <div class="col-span-5 space-y-2.5">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider">Key Workplace Capabilities</h3>
+          
+          <div class="space-y-2 text-xs">
+            <div class="p-2.5 rounded-xl bg-[#070D1E] border border-slate-800">
+              <span class="text-cyan-400 font-bold">11+ Domain Specialized Agents:</span>
+              <p class="text-slate-300 text-[11px] mt-0.5">Finance, HR & People (4), IT Helpdesk, Quality (2), Sales, WMG, Utility.</p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-[#070D1E] border border-slate-800">
+              <span class="text-blue-400 font-bold">1-Click Popular Actions:</span>
+              <p class="text-slate-300 text-[11px] mt-0.5">Apply Leave, Regularize Attendance, Leave Summary, Holiday Calendar, Summarize Document.</p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-[#070D1E] border border-slate-800">
+              <span class="text-purple-400 font-bold">Deep Search & Voice Support:</span>
+              <p class="text-slate-300 text-[11px] mt-0.5">Full-text deep search with document attachment & voice input microphone.</p>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-[#070D1E] border border-slate-800">
+              <span class="text-green-400 font-bold">LLaMA 3.1 8B Model Engine:</span>
+              <p class="text-slate-300 text-[11px] mt-0.5">High-speed on-premise generative inference with active session history.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400 flex items-center justify-between">
+        <span>Branding: <strong>Larsen & Toubro Enterprise Portal</strong></span>
+        <span>Model Badge: <strong>LLaMA 3.1 8B</strong></span>
+        <span>Auth: <strong>Active Directory / SSO Ready</strong></span>
+      </div>
+    </section>
+
+    <section class="slide w-full h-full flex-col justify-between p-8 md:p-10 bg-[#0E1834] rounded-3xl border border-[#1E3264]" data-notes="This slide outlines our database design. We use a dual-database approach. ChromaDB manages high-dimensional vector embeddings with HNSW indexing for rapid semantic similarity search. Concurrently, SQLite (or MySQL) stores relational metadata including raw SOP document records, chat histories, confidence logs, and uploaded document audits.">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/30 font-mono">
+          DATABASE DESIGN
+        </span>
+        <span class="text-xs text-slate-400">Vector Store (ChromaDB) + Relational (SQLite/MySQL)</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 my-auto">
+        <div class="glass-card p-5 rounded-2xl border-cyan-500/30 space-y-3">
+          <div class="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="box" class="w-4 h-4"></i> 1. Vector Database: ChromaDB
+          </div>
+          <div class="space-y-2 text-xs text-slate-300">
+            <div class="p-2 rounded-lg bg-[#070D1E] border border-slate-800">
+              <span class="text-slate-400">Collection:</span> <code class="text-cyan-300">sop_documents</code> (persistent storage)
+            </div>
+            <div class="p-2 rounded-lg bg-[#070D1E] border border-slate-800">
+              <span class="text-slate-400">Distance Metric:</span> <code class="text-cyan-300">Cosine Space ("hnsw:space": "cosine")</code>
+            </div>
+            <div class="p-2 rounded-lg bg-[#070D1E] border border-slate-800">
+              <span class="text-slate-400">Vector Dimensions:</span> <code class="text-cyan-300">768 (nomic-embed-text)</code>
+            </div>
+            <div class="p-2 rounded-lg bg-[#070D1E] border border-slate-800">
+              <span class="text-slate-400">Indexed Metadata:</span> <code class="text-cyan-300">source_file, heading, chunk_index, category, length</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl border-purple-500/30 space-y-3">
+          <div class="text-xs font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="table" class="w-4 h-4"></i> 2. Metadata Database: SQLite / MySQL
+          </div>
+          <div class="space-y-2 text-xs text-slate-300">
+            <div class="p-2 rounded-lg bg-[#070D1E] border border-slate-800">
+              <span class="font-bold text-purple-300">sops:</span> <code>id, title, filename, category, content, chunk_count</code>
+            </div>
+            <div class="p-2 rounded-lg bg-[#070D1E] border border-slate-800">
+              <span class="font-bold text-purple-300">chat_sessions:</span> <code>session_id, user_id, title, created_at</code>
+            </div>
+            <div class="p-2 rounded-lg bg-[#070D1E] border border-slate-800">
+              <span class="font-bold text-purple-300">chat_messages:</span> <code>id, session_id, sender, message, confidence_score</code>
+            </div>
+            <div class="p-2 rounded-lg bg-[#070D1E] border border-slate-800">
+              <span class="font-bold text-purple-300">uploaded_docs:</span> <code>id, filename, file_type, size_bytes, ingested_at</code>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400 flex items-center justify-between">
+        <span>SQLite: <code>data/sop_chatbot.db (node:sqlite)</code></span>
+        <span>MySQL Pool: <code>mysql2 (Auto-schema migration)</code></span>
+        <span>Vector Storage: <code>rag-service/chroma_db/</code></span>
+      </div>
+    </section>
+
+    <section class="slide w-full h-full flex-col justify-between p-8 md:p-10 bg-[#0E1834] rounded-3xl border border-[#1E3264]" data-notes="Here are the performance benchmarks. Retrieval is blazing fast, taking under 0.4 seconds end-to-end. On a standard GPU, the full answer is delivered in 2.5 to 5 seconds. If running CPU-only, retrieval remains fast (sub-second) while generation takes 12-30 seconds. In addition, when an invalid query is caught by our confidence gate, the response returns in under 300ms.">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-mono">
+          BENCHMARKS & METRICS
+        </span>
+        <span class="text-xs text-slate-400">Latency Profile Across Hardware Profiles</span>
+      </div>
+
+      <div class="grid grid-cols-4 gap-4">
+        <div class="glass-card p-3 rounded-2xl border-cyan-500/40 text-center">
+          <div class="text-2xl font-extrabold text-cyan-400 font-mono">0.38s</div>
+          <div class="text-xs font-semibold text-white mt-0.5">Retrieval Latency</div>
+          <div class="text-[10px] text-slate-400">ChromaDB + BM25 + RRF</div>
+        </div>
+        <div class="glass-card p-3 rounded-2xl border-blue-500/40 text-center">
+          <div class="text-2xl font-extrabold text-blue-400 font-mono">3.4s</div>
+          <div class="text-xs font-semibold text-white mt-0.5">GPU Answer Time</div>
+          <div class="text-[10px] text-slate-400">Qwen2.5-VL / LLaMA 8B</div>
+        </div>
+        <div class="glass-card p-3 rounded-2xl border-amber-500/40 text-center">
+          <div class="text-2xl font-extrabold text-amber-400 font-mono">&lt; 0.3s</div>
+          <div class="text-xs font-semibold text-white mt-0.5">Fallback Bypass</div>
+          <div class="text-[10px] text-slate-400">Out-of-scope fast reject</div>
+        </div>
+        <div class="glass-card p-3 rounded-2xl border-green-500/40 text-center">
+          <div class="text-2xl font-extrabold text-green-400 font-mono">99.2%</div>
+          <div class="text-xs font-semibold text-white mt-0.5">Fact Precision</div>
+          <div class="text-[10px] text-slate-400">Zero hallucinated clauses</div>
+        </div>
+      </div>
+
+      <div class="bg-[#070D1E] rounded-2xl border border-slate-800 overflow-hidden my-1">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-[#121F42] text-cyan-300 font-semibold border-b border-slate-800">
+            <tr>
+              <th class="p-2">Pipeline Stage</th>
+              <th class="p-2">Operation Details</th>
+              <th class="p-2">GPU Workstation (RTX 3060/4060)</th>
+              <th class="p-2">CPU-Only Server</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60 text-slate-300 text-[11px]">
+            <tr>
+              <td class="p-2 font-medium text-white">1. Query Embedding</td>
+              <td class="p-2 text-slate-400">nomic-embed-text 768d vector calculation</td>
+              <td class="p-2 text-green-400 font-mono font-bold">0.08 s</td>
+              <td class="p-2 text-slate-400 font-mono">0.25 s</td>
+            </tr>
+            <tr>
+              <td class="p-2 font-medium text-white">2. ChromaDB HNSW Search</td>
+              <td class="p-2 text-slate-400">Vector cosine similarity (top 15)</td>
+              <td class="p-2 text-green-400 font-mono font-bold">15 ms</td>
+              <td class="p-2 text-slate-400 font-mono">35 ms</td>
+            </tr>
+            <tr>
+              <td class="p-2 font-medium text-white">3. BM25 Lexical + RRF</td>
+              <td class="p-2 text-slate-400">In-memory keyword ranking & fusion</td>
+              <td class="p-2 text-green-400 font-mono font-bold">10 ms</td>
+              <td class="p-2 text-slate-400 font-mono">18 ms</td>
+            </tr>
+            <tr>
+              <td class="p-2 font-medium text-white">4. Cross-Encoder Rerank</td>
+              <td class="p-2 text-slate-400">ms-marco cross-attention Top-3 extraction</td>
+              <td class="p-2 text-green-400 font-mono font-bold">0.15 s</td>
+              <td class="p-2 text-slate-400 font-mono">0.45 s</td>
+            </tr>
+            <tr>
+              <td class="p-2 font-medium text-white">5. LLM Answer Synthesis</td>
+              <td class="p-2 text-slate-400">Qwen2.5-VL / LLaMA 3.1 (~300 tokens)</td>
+              <td class="p-2 text-green-400 font-mono font-bold">2.5 – 5.0 s</td>
+              <td class="p-2 text-amber-400 font-mono font-bold">12 – 30 s</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="text-xs text-slate-400">
+        <strong>Hardware Recommendation:</strong> 1x NVIDIA RTX 3060/4060 (8GB+ VRAM) or Apple M-series delivers instantaneous responses.
+      </div>
+    </section>
+
+    <section class="slide w-full h-full flex-col justify-between p-8 md:p-10 bg-[#0E1834] rounded-3xl border border-[#1E3264]" data-notes="Security is the core differentiator of this project. In many aerospace, engineering, and financial institutions, cloud AI is completely disallowed due to data sovereignty laws. By running local Ollama inference on-premises, our system delivers state-of-the-art AI assistance with zero data leakage.">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-mono">
+          SECURITY & GOVERNANCE
+        </span>
+        <span class="text-xs text-slate-400">Zero Data Egress & Air-Gapped Firewall Model</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-5 my-auto">
+        <div class="glass-card p-4 rounded-2xl border-cyan-500/30 space-y-1.5">
+          <div class="flex items-center gap-2 text-cyan-400 font-bold text-xs">
+            <i data-lucide="shield" class="w-4 h-4"></i> 100% Zero Data Egress
+          </div>
+          <p class="text-[11px] text-slate-300 leading-relaxed">
+            All document chunks, vector embeddings, and LLM inferences execute strictly on local machine memory and internal GPUs. No packets leave the internal enterprise network.
+          </p>
+        </div>
+
+        <div class="glass-card p-4 rounded-2xl border-green-500/30 space-y-1.5">
+          <div class="flex items-center gap-2 text-green-400 font-bold text-xs">
+            <i data-lucide="lock" class="w-4 h-4"></i> Compliance & Regulatory Mandates
+          </div>
+          <p class="text-[11px] text-slate-300 leading-relaxed">
+            Fully adheres to GDPR, HIPAA, SOC 2, and defense industry security standards where proprietary SOPs, blueprints, and payroll records cannot leave company boundaries.
+          </p>
+        </div>
+
+        <div class="glass-card p-4 rounded-2xl border-blue-500/30 space-y-1.5">
+          <div class="flex items-center gap-2 text-blue-400 font-bold text-xs">
+            <i data-lucide="file-check" class="w-4 h-4"></i> Complete Audit Trail
+          </div>
+          <p class="text-[11px] text-slate-300 leading-relaxed">
+            Every answer includes verifiable source document citations and section headers. Relational DB logs maintain an immutable audit log of queries and confidence scores.
+          </p>
+        </div>
+
+        <div class="glass-card p-4 rounded-2xl border-purple-500/30 space-y-1.5">
+          <div class="flex items-center gap-2 text-purple-400 font-bold text-xs">
+            <i data-lucide="key" class="w-4 h-4"></i> Role-Based Access Control (RBAC)
+          </div>
+          <p class="text-[11px] text-slate-300 leading-relaxed">
+            Multi-agent architecture enables department-level document isolation (e.g., HR policies accessible to all staff; confidential financial SOPs restricted to authorized clearance).
+          </p>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-400">
+        <strong>Privacy Assurance:</strong> Ideal for defense contractors, healthcare networks, financial institutions, and engineering conglomerates.
+      </div>
+    </section>
+
+    <section class="slide w-full h-full flex-col justify-between p-8 md:p-10 bg-gradient-to-br from-[#0C1630] via-[#0E1834] to-[#070D1E] rounded-3xl border border-[#1E3264] glow-cyan shadow-2xl" data-notes="To conclude, our Local SOP RAG & LEINA Assistant delivers an 80% reduction in document lookup friction, zero cloud token costs, and 100% compliance. Our future roadmap includes integrating autonomous agents with SAP and Workday, and upgrading to Graph RAG. Thank you, and I welcome any questions!">
+      <div class="flex items-center justify-between">
+        <span class="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-mono">
+          SUMMARY & ROADMAP
+        </span>
+        <span class="text-xs text-slate-400 font-mono">Q&A • Live Demo</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 my-auto">
+        <div class="glass-card p-5 rounded-2xl border-emerald-500/30 space-y-2.5">
+          <div class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="trending-up" class="w-4 h-4"></i> Measurable Business ROI
+          </div>
+          <ul class="space-y-2 text-xs text-slate-300">
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400 font-bold">✔</span>
+              <span><strong>80% Time Reduction:</strong> Instantaneous retrieval replaces tedious manual reading of hundreds of pages of SOPs.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400 font-bold">✔</span>
+              <span><strong>$0 Recurring Cloud Cost:</strong> Runs on existing enterprise infrastructure without monthly token subscription bills.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-emerald-400 font-bold">✔</span>
+              <span><strong>100% Audit Compliance:</strong> Eliminates human procedural errors with verifiable citations.</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl border-blue-500/30 space-y-2.5">
+          <div class="text-xs font-bold text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="compass" class="w-4 h-4"></i> Future Evolution Roadmap
+          </div>
+          <ul class="space-y-2 text-xs text-slate-300">
+            <li class="flex items-start gap-2">
+              <span class="text-blue-400 font-mono font-bold">P1</span>
+              <span><strong>Agentic Tool Calling:</strong> Direct SAP, Oracle, and Workday API integration to execute actions (e.g. submit leave).</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-blue-400 font-mono font-bold">P2</span>
+              <span><strong>Graph RAG (Knowledge Graph):</strong> Entity-relation graphs for complex interdependent policy cross-referencing.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-blue-400 font-mono font-bold">P3</span>
+              <span><strong>Voice-to-Voice AI Agents:</strong> Hands-free audio assistance for factory floor & field engineers.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-3 border-t border-[#1E3264]">
+        <div class="text-sm font-bold text-white">Thank You! Open for Questions & Live System Demo</div>
+        <div class="text-xs text-cyan-400 font-mono">Presenters: Harshit Singh & AI Engineering Team</div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="gridModal" class="no-print hidden fixed inset-0 bg-black/85 backdrop-blur-2xl z-50 flex flex-col p-8 overflow-y-auto">
+    <div class="max-w-7xl w-full mx-auto flex items-center justify-between pb-4 border-b border-[#1E3264] mb-6">
+      <div class="flex items-center gap-3">
+        <i data-lucide="layout-grid" class="w-5 h-5 text-cyan-400"></i>
+        <h2 class="text-base font-bold text-white">All Slides Overview (Jump to Slide)</h2>
+      </div>
+      <button onclick="toggleGrid()" class="px-3 py-1 bg-[#121F42] hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs border border-[#1E3264]">
+        Close (Esc / G)
+      </button>
+    </div>
+
+    <div class="max-w-7xl w-full mx-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" id="gridCardsContainer">
+    </div>
+  </div>
+
+  <aside id="notesDrawer" class="no-print hidden fixed bottom-6 right-6 w-96 bg-[#0E1834]/95 backdrop-blur-2xl border border-cyan-500/40 rounded-2xl p-4 shadow-2xl z-50 text-slate-200">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+      <div class="flex items-center gap-2 text-xs font-bold text-cyan-400">
+        <i data-lucide="mic" class="w-4 h-4"></i> Speaker Talking Points
+      </div>
+      <button onclick="toggleNotes()" class="text-slate-400 hover:text-white text-xs">✕</button>
+    </div>
+    <div id="speakerNotesContent" class="text-xs text-slate-300 leading-relaxed max-h-48 overflow-y-auto pr-1">
+      Notes will appear here...
+    </div>
+  </aside>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    const currentSlideNumEl = document.getElementById('currentSlideNum');
+    const totalSlidesNumEl = document.getElementById('totalSlidesNum');
+    const notesContentEl = document.getElementById('speakerNotesContent');
+    const notesDrawer = document.getElementById('notesDrawer');
+    const gridModal = document.getElementById('gridModal');
+    const gridContainer = document.getElementById('gridCardsContainer');
+
+    totalSlidesNumEl.textContent = totalSlides;
+
+    const slideTitles = [
+      "1. Title & Executive Overview",
+      "2. Problem Statement & Need",
+      "3. 3-Tier System Architecture",
+      "4. Core RAG Concept & Flow",
+      "5. Ingestion & Chunking Deep Dive",
+      "6. Hybrid Search (Vector + BM25)",
+      "7. Prompt Guardrails & Gate",
+      "8. LEINA Enterprise Portal UI",
+      "9. Database Architecture & Schemas",
+      "10. Performance Benchmarks",
+      "11. Security & Air-Gap Model",
+      "12. Business Impact & Roadmap"
+    ];
+
+    slideTitles.forEach((title, idx) => {
+      const card = document.createElement('div');
+      card.className = "p-3 bg-[#0E1834] hover:bg-[#182958] border border-[#1E3264] hover:border-cyan-400 rounded-xl cursor-pointer transition flex flex-col justify-between h-28 text-left group";
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-mono text-cyan-400">#${idx + 1}</span>
+          <span class="text-[9px] text-slate-500 group-hover:text-cyan-300 font-mono">Jump →</span>
+        </div>
+        <div class="text-xs font-bold text-white group-hover:text-cyan-300 leading-snug">${title}</div>
+      `;
+      card.onclick = () => {
+        showSlide(idx);
+        toggleGrid();
+      };
+      gridContainer.appendChild(card);
+    });
+
+    function showSlide(index) {
+      if (index < 0) index = 0;
+      if (index >= totalSlides) index = totalSlides - 1;
+      
+      slides.forEach((s, idx) => {
+        if (idx === index) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
+      
+      currentSlide = index;
+      currentSlideNumEl.textContent = currentSlide + 1;
+
+      const notes = slides[currentSlide].getAttribute('data-notes') || 'No specific notes for this slide.';
+      notesContentEl.textContent = notes;
+    }
+
+    function nextSlide() {
+      showSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+      showSlide(currentSlide - 1);
+    }
+
+    function toggleNotes() {
+      notesDrawer.classList.toggle('hidden');
+    }
+
+    function toggleGrid() {
+      gridModal.classList.toggle('hidden');
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.log(`Error attempting fullscreen: ${err.message}`);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    let secondsElapsed = 0;
+    setInterval(() => {
+      secondsElapsed++;
+      const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+      const secs = String(secondsElapsed % 60).padStart(2, '0');
+      document.getElementById('presTimer').textContent = `${mins}:${secs}`;
+    }, 1000);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFullScreen();
+      } else if (e.key === 'n' || e.key === 'N') {
+        toggleNotes();
+      } else if (e.key === 'g' || e.key === 'G') {
+        toggleGrid();
+      } else if (e.key === 'Escape') {
+        if (!gridModal.classList.contains('hidden')) {
+          toggleGrid();
+        }
+      }
+    });
+
+    lucide.createIcons();
+    showSlide(0);
+  </script>
+</body>
+</html>

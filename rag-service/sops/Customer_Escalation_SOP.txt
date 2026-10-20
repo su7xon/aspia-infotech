@@ -1,0 +1,9 @@
+SECTION 1: ESCALATION CRITERIA
+Escalate a customer issue to Tier-3 Senior Support when:
+1. The outage affects more than 50 enterprise seats or core revenue-generating workflows.
+2. Resolution time exceeds 4 hours without resolution.
+3. The customer explicitly requests SLA Breach review under Enterprise Agreement Section 9.
+
+SECTION 2: INCIDENT REPORTING
+Create a Priority-1 ticket in Jira Service Management and assign it to 'Ops-Tier3-OnCall'.
+Notify the Duty Incident Commander on Slack channel #incident-response with ticket link, customer account ID, and steps taken so far.

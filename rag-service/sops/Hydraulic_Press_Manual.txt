@@ -1,0 +1,17 @@
+SECTION 1: HYDRAULIC PRESS STARTUP CHECKLIST
+Before initializing Press Unit HP-400, verify hydraulic fluid level is between 75% and 90% on gauge G-2.
+Ensure emergency shut-off plunger E-STOP is disengaged and safety light curtains are fully operational.
+Operators must wear Level 3 protective goggles, steel-toe boots, and heavy duty heat-resistant gloves.
+
+SECTION 2: ERROR CODE 402 TROUBLESHOOTING
+Error Code 402 indicates "Hydraulic Fluid Pressure Over-Relief Valve Triggered".
+Immediate Action Steps for Error 402:
+1. Press the red Emergency Stop button immediately to halt motor M-1.
+2. Isolate main power supply panel P-04 and apply Lockout/Tagout (LOTO) padlock.
+3. Allow hydraulic pressure to bleed down to 0 PSI on Pressure Gauge P-1.
+4. Inspect return line filter F-2 for particulate blockages.
+5. Do NOT restart the unit manually. Contact Facilities Engineering at ext. 8820 or submit a Work Order in MaintenanceApp.
+
+SECTION 3: DAILY PREVENTATIVE MAINTENANCE
+Clean metal shavings from bed plate after every shift using non-magnetic scraper.
+Lubricate guide pillars with Grade-VG68 oil every 24 operating hours.
